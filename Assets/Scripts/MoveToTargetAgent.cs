@@ -15,18 +15,34 @@ public class MoveToTargetAgent : Agent
     [SerializeField] private Color winColour = Color.green;
     [SerializeField] private Color loseColour = Color.red;
     [SerializeField] private Color idleColour = Color.grey;
-    
+    public GameObject[] checkPoints;
+    private int nextCheckpoint;
+
     public override void OnEpisodeBegin()
     {
-        transform.localPosition = new Vector3(2.84f, 0.5f, 1.53f);
-        target.localPosition = new Vector3(
-            Random.Range(-4f, 4f), 0.5f, Random.Range(1f, 4f));
+        transform.localPosition = new Vector3(8.25f, 0.5f, -8.5f);
+        //target.localPosition = new Vector3(
+            //Random.Range(-4f, 4f), 0.5f, Random.Range(1f, 4f));
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        sensor.AddObservation(transform.localPosition); // 3
-        sensor.AddObservation(target.localPosition); //3
+        Vector3 toNext = PointAt(nextCheckpoint) - transform.position;
+        toNext.y = 0f;
+        Vector3 toAhead = PointAt(nextCheckpoint + 4) - transform.position;
+        toAhead.y = 0f;
+
+        sensor.AddObservation(toNext.normalized.x);
+        sensor.AddObservation(toNext.normalized.z);
+        sensor.AddObservation(Mathf.Clamp01(toNext.magnitude / 5f));
+        sensor.AddObservation(toAhead.normalized.x);
+        sensor.AddObservation(toAhead.normalized.z);
+    }
+
+    private Vector3 PointAt(int index)
+    {
+        if (index < checkPoints.Length) return checkPoints[index].transform.position;
+        return target.position;
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -62,15 +78,22 @@ public class MoveToTargetAgent : Agent
     {
         if (other.CompareTag("Target"))
         {
-            SetReward(1f);
+            AddReward(5f);
             floor.material.color = winColour;
             EndEpisode();
         }
         else if (other.CompareTag("Wall"))
         {
-            SetReward(-1f);
+            AddReward(-2f);
             floor.material.color = loseColour;
             EndEpisode();
+        }
+
+        if (nextCheckpoint < checkPoints.Length && other.gameObject == checkPoints[nextCheckpoint])
+        {
+            print("checkpoint touched");
+            AddReward(0.1f * (nextCheckpoint + 1));
+            nextCheckpoint++;
         }
     }
 }
