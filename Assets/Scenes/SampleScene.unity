@@ -1372,7 +1372,7 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 3500
+  MaxStep: 10000
   target: {fileID: 27157984}
   moveSpeed: 2.2
   floor: {fileID: 1518025951}
